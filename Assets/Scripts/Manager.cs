@@ -6,29 +6,32 @@ using UnityEngine.UI;
 
 public class Manager : MonoBehaviour
 {
-    internal static Manager mg;//静态化
+    internal static Manager mg; //静态化
 
     public GameObject Forest;
     public GameObject Tree_Prefab;
     public GameObject mainCamera;
 
-    public GameObject[] BranchNumSliders;//对应同名UI
-    Slider[] bnSliders;//对应同名UI
-    public GameObject[] BigToSmallSliders;//对应同名UI
-    Slider[] btsSliders;//对应同名UI
+    public GameObject[] BranchNumSliders; //对应同名UI
+    Slider[] bnSliders; //对应同名UI
+    public GameObject[] BigToSmallSliders; //对应同名UI
+    Slider[] btsSliders; //对应同名UI
 
-    public int treeIterNum = 7;//树分枝最大迭代数
+    public int treeIterNum = 7; //树分枝最大迭代数
+
     public enum TreeIterNumber
     {
-        Five_Poor = 5,
-        Six_Fast = 6,
-        Seven_Medium = 7,
-        Eight_Good = 8,
-        Nine_High = 9,
-        Ten_Slow = 10
+        Five_Poor = 0,
+        Six_Fast = 1,
+        Seven_Medium = 2,
+        Eight_Good = 3,
+        Nine_High = 4,
+        Ten_Slow = 5
     }
-    public GameObject TreeIterNumberDropdown;//树分枝最大迭代数
-    internal Dropdown treeIterNumberDropdown;//树分枝最大迭代数
+
+    public GameObject TreeIterNumberDropdown; //树分枝最大迭代数
+    internal Dropdown treeIterNumberDropdown; //树分枝最大迭代数
+
     public void ChangeTreeIterNum()
     {
         treeIterNum = treeIterNumberDropdown.value + 5;
@@ -43,6 +46,7 @@ public class Manager : MonoBehaviour
     }
 
     float ratio = 0.3f;
+
     void Start()
     {
         bnSliders = new Slider[BranchNumSliders.Length];
@@ -51,12 +55,11 @@ public class Manager : MonoBehaviour
         {
             bnSliders[i] = BranchNumSliders[i].GetComponent<Slider>();
         }
+
         for (int i = 0; i < BigToSmallSliders.Length; i++)
         {
             btsSliders[i] = BigToSmallSliders[i].GetComponent<Slider>();
         }
-
-        createForest();
 
         rotateToggle = RotateToggle.GetComponent<Toggle>();
         rotateSpeedSlider = RotateSpeedSlider.GetComponent<Slider>();
@@ -69,6 +72,8 @@ public class Manager : MonoBehaviour
             colorStyleDropdown.options.Add(new Dropdown.OptionData(strName));
         }
 
+        colorStyleDropdown.value = (int) ColorStyle.Deep;
+
         treeNumberDropdown = TreeNumberDropdown.GetComponent<Dropdown>();
         treeNumberDropdown.options.Clear();
         foreach (int tn_index in Enum.GetValues(typeof(TreeNumber)))
@@ -76,6 +81,8 @@ public class Manager : MonoBehaviour
             string strName = Enum.GetName(typeof(TreeNumber), tn_index);
             treeNumberDropdown.options.Add(new Dropdown.OptionData(strName));
         }
+
+        treeNumberDropdown.value = (int) TreeNumber.Three;
 
         treeIterNumberDropdown = TreeIterNumberDropdown.GetComponent<Dropdown>();
         treeIterNumberDropdown.options.Clear();
@@ -85,6 +92,9 @@ public class Manager : MonoBehaviour
             treeIterNumberDropdown.options.Add(new Dropdown.OptionData(strName));
         }
 
+        treeIterNumberDropdown.value = (int) TreeIterNumber.Eight_Good;
+
+        createForest();
     }
 
     void Update()
@@ -101,6 +111,7 @@ public class Manager : MonoBehaviour
     float dragRotateTimeInterval = 0.1f;
     float mouseClickTreshold = 0.2f;
     float mouseClickTimeTicker = 0f;
+
     /// <summary>
     ///  树枝编辑动作
     /// </summary>
@@ -119,7 +130,7 @@ public class Manager : MonoBehaviour
                     selectBranch = hitInfo.collider.gameObject;
                     if (selectBranch.layer == 8)
                     {
-                        branch(selectBranch);//增加新枝(随机出枝方向)
+                        branch(selectBranch); //增加新枝(随机出枝方向)
                     }
                 }
                 else
@@ -129,10 +140,11 @@ public class Manager : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonDown(0)|| Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
             mouseClickTimeTicker = 0f;
         }
+
         mouseClickTimeTicker += Time.deltaTime;
 
         //鼠标右键点击，修剪
@@ -148,7 +160,7 @@ public class Manager : MonoBehaviour
                     selectBranch = hitInfo.collider.gameObject;
                     if (selectBranch.layer == 8)
                     {
-                        trim(selectBranch);//修剪
+                        trim(selectBranch); //修剪
                     }
                 }
                 else
@@ -200,27 +212,29 @@ public class Manager : MonoBehaviour
         {
             mainCamera.transform.Translate(Vector3.left * Input.GetAxis("Mouse X") * 0.1f);
             mainCamera.transform.Translate(Vector3.up * -Input.GetAxis("Mouse Y") * 0.1f);
-
         }
     }
 
     #endregion
 
     #region 色彩风格
+
     public enum ColorStyle
     {
         Red,
         Green,
         Deep
     }
+
     public ColorStyle colorStyle;
-    public GameObject ColorStyleDropdown;//色彩风格
-    internal Dropdown colorStyleDropdown;//色彩风格
+    public GameObject ColorStyleDropdown; //色彩风格
+    internal Dropdown colorStyleDropdown; //色彩风格
     internal bool colorChangeTrigger = false;
+
     public void ChangeColor()
     {
         colorChangeTrigger = true;
-        colorStyle = (ColorStyle)colorStyleDropdown.value;
+        colorStyle = (ColorStyle) colorStyleDropdown.value;
         switch (colorStyle)
         {
             case ColorStyle.Deep:
@@ -235,12 +249,13 @@ public class Manager : MonoBehaviour
             default:
                 break;
         }
+
         StartCoroutine(resetColorChangeTrigger());
     }
 
     IEnumerator resetColorChangeTrigger()
     {
-        yield return new WaitForEndOfFrame();//帧末复原，所有树枝颜色更改完毕
+        yield return new WaitForEndOfFrame(); //帧末复原，所有树枝颜色更改完毕
         colorChangeTrigger = false;
     }
 
@@ -248,39 +263,44 @@ public class Manager : MonoBehaviour
 
     #region 树飘动
 
-    internal bool isRotating = false;//是否飘动
+    internal bool isRotating = false; //是否飘动
+
     public void RotateSwitch()
     {
         isRotating = rotateToggle.isOn;
     }
-    public GameObject RotateSpeedSlider;//飘动幅度
-    internal Slider rotateSpeedSlider;//飘动幅度
-    public GameObject RotateToggle;//飘动开关
-    Toggle rotateToggle;//飘动开关
+
+    public GameObject RotateSpeedSlider; //飘动幅度
+    internal Slider rotateSpeedSlider; //飘动幅度
+    public GameObject RotateToggle; //飘动开关
+    Toggle rotateToggle; //飘动开关
 
     #endregion
 
     #region 森林增减
 
-    public float TreeDistance = 5f;//树间距
+    public float TreeDistance = 5f; //树间距
 
     public enum TreeNumber
     {
-        One=1,
-        Two=2,
-        Three=3,
-        Four=4,
-        Five=5
+        One = 0,
+        Two = 1,
+        Three = 2,
+        Four = 3,
+        Five = 4
     }
-    int TreeNum=1;
-    public GameObject TreeNumberDropdown;//树数量
-    internal Dropdown treeNumberDropdown;//树数量
+
+    int TreeNum = 1;
+    public GameObject TreeNumberDropdown; //树数量
+    internal Dropdown treeNumberDropdown; //树数量
+
     public void ChangeTreeNum()
     {
         TreeNum = treeNumberDropdown.value + 1;
     }
 
     List<BiangTree> biangTrees = new List<BiangTree>();
+
     /// <summary>
     /// 创造森林
     /// </summary>
@@ -305,18 +325,20 @@ public class Manager : MonoBehaviour
     {
         for (int j = 0; j < bnSliders.Length; j++)
         {
-            bt.BranchNum_probabilites[j] = (int)(bnSliders[j].value * 100)+1;
+            bt.BranchNum_probabilites[j] = (int) (bnSliders[j].value * 100) + 1;
         }
+
         for (int j = 0; j < btsSliders.Length - 1; j++)
         {
-            bt.BranchDecay_probabilites[j + 1] = (int)(btsSliders[j].value * 100)+1;
+            bt.BranchDecay_probabilites[j + 1] = (int) (btsSliders[j].value * 100) + 1;
         }
+
         bt.InitializeProbabilities();
     }
 
     public void RefreshAllTreeProbabilities()
     {
-        foreach(BiangTree bt in biangTrees)
+        foreach (BiangTree bt in biangTrees)
         {
             refreshProbabilities(bt);
         }
@@ -333,6 +355,7 @@ public class Manager : MonoBehaviour
         {
             Destroy(Forest.transform.GetChild(i).gameObject, 0.1f);
         }
+
         createForest();
     }
 
@@ -352,6 +375,7 @@ public class Manager : MonoBehaviour
         {
             Destroy(branch.transform.GetChild(i).gameObject, 0.1f);
         }
+
         Destroy(branch, 0.1f);
     }
 
@@ -378,5 +402,4 @@ public class Manager : MonoBehaviour
     }
 
     #endregion
-
 }
